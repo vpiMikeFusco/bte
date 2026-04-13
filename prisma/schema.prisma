@@ -1,0 +1,82 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum ProductStatus { DRAFT ACTIVE ARCHIVED }
+enum QuoteRequestStatus { NEW REVIEWING PRICED WON LOST CLOSED }
+enum CartStatus { ACTIVE ABANDONED CONVERTED }
+enum OrderStatus { PENDING PAID PROCESSING SHIPPED COMPLETED CANCELLED REFUNDED }
+
+model Brand {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  slug      String   @unique
+  products  Product[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Category {
+  id          String    @id @default(cuid())
+  name        String
+  slug        String    @unique
+  description String?
+  products    Product[]
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+model Product {
+  id                String        @id @default(cuid())
+  partNumber        String        @unique
+  title             String
+  slug              String        @unique
+  shortDescription  String?
+  longDescription   String?
+  brandId           String?
+  categoryId        String?
+  status            ProductStatus @default(DRAFT)
+  isActive          Boolean       @default(true)
+  brand             Brand?        @relation(fields: [brandId], references: [id])
+  category          Category?     @relation(fields: [categoryId], references: [id])
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+}
+
+model QuoteRequest {
+  id           String             @id @default(cuid())
+  customerName String
+  companyName  String?
+  email        String
+  phone        String?
+  notes        String?
+  status       QuoteRequestStatus @default(NEW)
+  createdAt    DateTime           @default(now())
+  updatedAt    DateTime           @updatedAt
+}
+
+model Cart {
+  id         String     @id @default(cuid())
+  customerId String?
+  status     CartStatus @default(ACTIVE)
+  createdAt  DateTime   @default(now())
+  updatedAt  DateTime   @updatedAt
+}
+
+model Order {
+  id            String      @id @default(cuid())
+  orderNumber   String      @unique
+  status        OrderStatus @default(PENDING)
+  subtotal      Decimal     @db.Decimal(10, 2)
+  taxTotal      Decimal     @db.Decimal(10, 2)
+  shippingTotal Decimal     @db.Decimal(10, 2)
+  grandTotal    Decimal     @db.Decimal(10, 2)
+  currency      String      @default("CAD")
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+}
